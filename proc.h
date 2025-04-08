@@ -13,6 +13,8 @@ struct cpu {
 extern struct cpu cpus[NCPU];
 extern int ncpu;
 
+typedef void (*sighandler_t)(void);
+
 //PAGEBREAK: 17
 // Saved registers for kernel context switches.
 // Don't need to save all the segment registers (%cs, etc),
@@ -49,6 +51,10 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+  int pending_signals;         // Bitmap for pending signals
+  sighandler_t signal_handler; // Custom signal handler for SIGCUSTOM
+  int suspended;               // Flag to indicate if the process is suspended
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -56,3 +62,5 @@ struct proc {
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
+
+int sys_signal(void);

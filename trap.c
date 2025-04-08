@@ -63,10 +63,30 @@ trap(struct trapframe *tf)
   case T_IRQ0 + IRQ_IDE+1:
     // Bochs generates spurious IDE1 interrupts.
     break;
-  case T_IRQ0 + IRQ_KBD:
-    kbdintr();
+  case T_IRQ0 + IRQ_KBD:{
+    int c = kbdgetc();
+    if (c >= 'a' && c <= 'z') {
+      c -= 'a' - 'A';
+    }
+    if (c == 'C' - '@') { // Ctrl+C
+      cprintf("Ctrl-C is detected by xv6\n");
+      send_signal(SIGINT);
+    } else if (c == 'B' - '@') { // Ctrl+B
+      cprintf("Ctrl-B is detected by xv6\n");
+      send_signal(SIGBG);
+    } else if (c == 'F' - '@') { // Ctrl+F
+      cprintf("Ctrl-F is detected by xv6\n");
+      send_signal(SIGFG);
+    } else if (c == 'G' - '@') { // Ctrl+G
+      cprintf("Ctrl-G is detected by xv6\n");
+      send_signal(SIGCUSTOM);
+    }
     lapiceoi();
     break;
+  }
+    // kbdintr();
+    // lapiceoi();
+    // break;
   case T_IRQ0 + IRQ_COM1:
     uartintr();
     lapiceoi();
@@ -93,6 +113,15 @@ trap(struct trapframe *tf)
             tf->err, cpuid(), tf->eip, rcr2());
     myproc()->killed = 1;
   }
+
+  // Handle pending signals for the current process
+  if (myproc() && myproc()->pending_signals & (1 << SIGCUSTOM)) {
+    myproc()->pending_signals &= ~(1 << SIGCUSTOM); // Clear SIGCUSTOM
+    if (myproc()->signal_handler) {
+      myproc()->signal_handler(); // Call custom handler
+    }
+  }
+
 
   // Force process exit if it has been killed and is in user space.
   // (If it is still executing in the kernel, let it keep running

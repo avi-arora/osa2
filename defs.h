@@ -188,3 +188,16 @@ void            clearpteu(pde_t *pgdir, char *uva);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+
+
+#ifndef SIGNAL_H
+#define SIGNAL_H
+
+#define SIGINT    1  // Ctrl+C
+#define SIGBG     2  // Ctrl+B
+#define SIGFG     3  // Ctrl+F
+#define SIGCUSTOM 4  // Ctrl+G
+
+
+
+#endif

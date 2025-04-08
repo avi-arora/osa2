@@ -333,7 +333,7 @@ scheduler(void)
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
+      if(p->state != RUNNABLE || p->suspended)
         continue;
 
       // Switch to chosen process.  It is the process's job
@@ -531,4 +531,26 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+void
+send_signal(int signum)
+{
+  struct proc *p;
+  acquire(&ptable.lock);
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if (p->pid > 2) { // Skip init and shell
+      if (signum == SIGINT) {
+        p->killed = 1; // Mark process for termination
+      } else if (signum == SIGBG) {
+        p->suspended = 1; // Suspend process
+      } else if (signum == SIGFG && p->suspended) {
+        p->suspended = 0; // Resume process
+        p->state = RUNNABLE;
+      } else if (signum == SIGCUSTOM && p->signal_handler) {
+        p->pending_signals |= (1 << SIGCUSTOM); // Mark SIGCUSTOM as pending
+      }
+    }
+  }
+  release(&ptable.lock);
 }
