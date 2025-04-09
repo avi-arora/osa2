@@ -201,3 +201,5 @@ void            clearpteu(pde_t *pgdir, char *uva);
 
 
 #endif
+
+extern volatile int pending_signal;

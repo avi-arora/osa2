@@ -554,3 +554,27 @@ send_signal(int signum)
   }
   release(&ptable.lock);
 }
+
+// void 
+// send_signal(int signum)
+// {
+//   struct proc *p = myproc();
+//   if (p == 0) return; 
+
+//   if(p->pid > 2){
+//     if (signum == SIGINT) {
+//       p->killed = 1; // Mark process for termination
+//       cprintf("Ctrl-C is detected by xv6\n");
+//     } else if (signum == SIGBG) {
+//       p->suspended = 1; // Suspend process
+//       cprintf("Ctrl-B is detected by xv6\n");
+//     } else if (signum == SIGFG && p->suspended) {
+//       p->suspended = 0; // Resume process
+//       p->state = RUNNABLE;
+//       cprintf("Ctrl-F is detected by xv6\n");
+//     } else if (signum == SIGCUSTOM && p->signal_handler) {
+//       p->pending_signals |= (1 << SIGCUSTOM); // Mark SIGCUSTOM as pending
+//       cprintf("Ctrl-G is detected by xv6\n");
+//     }   
+//   }
+// }

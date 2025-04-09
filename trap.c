@@ -31,6 +31,7 @@ idtinit(void)
 {
   lidt(idt, sizeof(idt));
 }
+extern volatile int pending_signal;
 
 //PAGEBREAK: 41
 void
@@ -53,6 +54,12 @@ trap(struct trapframe *tf)
       ticks++;
       wakeup(&ticks);
       release(&tickslock);
+
+      if(pending_signal){
+        send_signal(pending_signal);
+        pending_signal = 0;
+      }
+      
     }
     lapiceoi();
     break;
@@ -63,30 +70,10 @@ trap(struct trapframe *tf)
   case T_IRQ0 + IRQ_IDE+1:
     // Bochs generates spurious IDE1 interrupts.
     break;
-  case T_IRQ0 + IRQ_KBD:{
-    int c = kbdgetc();
-    if (c >= 'a' && c <= 'z') {
-      c -= 'a' - 'A';
-    }
-    if (c == 'C' - '@') { // Ctrl+C
-      cprintf("Ctrl-C is detected by xv6\n");
-      send_signal(SIGINT);
-    } else if (c == 'B' - '@') { // Ctrl+B
-      cprintf("Ctrl-B is detected by xv6\n");
-      send_signal(SIGBG);
-    } else if (c == 'F' - '@') { // Ctrl+F
-      cprintf("Ctrl-F is detected by xv6\n");
-      send_signal(SIGFG);
-    } else if (c == 'G' - '@') { // Ctrl+G
-      cprintf("Ctrl-G is detected by xv6\n");
-      send_signal(SIGCUSTOM);
-    }
+  case T_IRQ0 + IRQ_KBD:
+    kbdintr();
     lapiceoi();
     break;
-  }
-    // kbdintr();
-    // lapiceoi();
-    // break;
   case T_IRQ0 + IRQ_COM1:
     uartintr();
     lapiceoi();

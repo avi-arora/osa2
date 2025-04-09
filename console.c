@@ -16,6 +16,7 @@
 #include "x86.h"
 
 static void consputc(int);
+volatile int pending_signal = 0;
 
 static int panicked = 0;
 
@@ -196,6 +197,15 @@ consoleintr(int (*getc)(void))
   acquire(&cons.lock);
   while((c = getc()) >= 0){
     switch(c){
+
+    //for signal handling
+    case C('C'):  // Ctrl-C
+    //cprintf("Ctrl-C is detected by xv6\n");
+    // send_signal(SIGINT);
+    pending_signal = SIGINT;
+    break;
+
+      
     case C('P'):  // Process listing.
       // procdump() locks cons.lock indirectly; invoke later
       doprocdump = 1;

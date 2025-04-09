@@ -64,3 +64,5 @@ struct proc {
 //   expandable heap
 
 int sys_signal(void);
+void 
+send_signal(int signum);
