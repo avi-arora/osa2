@@ -14,6 +14,8 @@ struct {
 
 static struct proc *initproc;
 
+struct proc *last_suspended_proc = 0; // Pointer to the last suspended process
+
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
@@ -537,18 +539,46 @@ void
 send_signal(int signum)
 {
   struct proc *p;
+  struct proc *shell_proc = 0;
+
   acquire(&ptable.lock);
+   // First, find the shell process (pid = 2)
+   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if (p->pid == 2) {
+      shell_proc = p;
+      break;
+    }
+  }
+
+
+
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
     if (p->pid > 2) { // Skip init and shell
       if (signum == SIGINT) {
         p->killed = 1; // Mark process for termination
+        cprintf("Ctrl-C is detected by xv6\n");
       } else if (signum == SIGBG) {
         p->suspended = 1; // Suspend process
-      } else if (signum == SIGFG && p->suspended) {
-        p->suspended = 0; // Resume process
-        p->state = RUNNABLE;
+        last_suspended_proc = p;
+        cprintf("Ctrl-B is detected by xv6\n");
+
+        if (shell_proc) {
+          cprintf("Shell process (pid 2) brought to foreground\n");
+          shell_proc->state = RUNNABLE;
+        }
+
+      } else if (signum == SIGFG) {
+        if (last_suspended_proc && last_suspended_proc->suspended) {
+          last_suspended_proc->suspended = 0; // Resume the last suspended process
+          last_suspended_proc->state = RUNNABLE;
+          cprintf("Ctrl-F is detected by xv6, process %d resumed\n", last_suspended_proc->pid);
+          last_suspended_proc = 0; // Clear the pointer after resuming
+        } else {
+          cprintf("Ctrl-F pressed, but no process to resume\n");
+        }
       } else if (signum == SIGCUSTOM && p->signal_handler) {
         p->pending_signals |= (1 << SIGCUSTOM); // Mark SIGCUSTOM as pending
+        cprintf("Ctrl-G is detected by xv6\n");
       }
     }
   }

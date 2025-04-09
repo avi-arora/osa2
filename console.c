@@ -205,6 +205,18 @@ consoleintr(int (*getc)(void))
     pending_signal = SIGINT;
     break;
 
+    case C('B'):  // Ctrl-B
+    pending_signal = SIGBG;
+    break;
+
+    case C('F'):  // Ctrl-F
+    pending_signal = SIGFG;
+    break;
+
+    case C('G'):  // Ctrl-G
+    pending_signal = SIGCUSTOM;
+    break;
+
       
     case C('P'):  // Process listing.
       // procdump() locks cons.lock indirectly; invoke later
